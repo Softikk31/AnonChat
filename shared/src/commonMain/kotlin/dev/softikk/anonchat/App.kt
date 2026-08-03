@@ -49,7 +49,7 @@ class ChatService(
 
     init {
         viewModelScope.launch {
-            client.webSocket("ws://localhost:8080/chat") {
+            client.webSocket("wss://4-chan.ru/chat") {
                 session = this
                 while (isActive) {
                     _messages.value = receiveDeserialized<List<Message>>()
