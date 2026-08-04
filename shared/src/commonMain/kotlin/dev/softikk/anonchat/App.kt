@@ -22,9 +22,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.ktor.client.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
@@ -35,32 +38,51 @@ import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+const val HOST = "4-chan.ru"
+
 @Serializable
 data class Message(
     val id: Uuid, val text: String, val createAt: LocalDateTime
 )
 
-class ChatService(
+class ChatViewModel(
     private val client: HttpClient
 ) : ViewModel() {
     private var session: DefaultWebSocketSession? = null
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages = _messages.asStateFlow()
 
+    private suspend fun chat() {
+        client.webSocket("/chat") {
+            if (session == null) {
+                session = this
+            }
+            while (isActive) {
+                _messages.value = receiveDeserialized<List<Message>>()
+            }
+        }
+    }
+
     init {
         viewModelScope.launch {
-            client.webSocket("wss://4-chan.ru/chat") {
-                session = this
-                while (isActive) {
-                    _messages.value = receiveDeserialized<List<Message>>()
-                }
+            try {
+                chat()
+            } catch (_: ClosedReceiveChannelException) {
+                chat()
+            } catch (_: Exception) {
+
             }
         }
     }
 
     fun sendMessage(text: String) {
         viewModelScope.launch {
-            session?.send(text)
+            try {
+                session?.send(text)
+
+            } catch (_: ClosedSendChannelException) {
+                chat()
+            }
         }
     }
 }
@@ -70,7 +92,10 @@ class ChatService(
 @Preview
 fun App() {
     val chat = viewModel {
-        ChatService(HttpClient {
+        ChatViewModel(HttpClient {
+            defaultRequest {
+                host = HOST
+            }
             install(WebSockets) {
                 contentConverter = KotlinxWebsocketSerializationConverter(Json)
             }
