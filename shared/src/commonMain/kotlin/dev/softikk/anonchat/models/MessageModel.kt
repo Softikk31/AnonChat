@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
 @Serializable
-data class Message(
-    val id: Uuid, val text: String, val createAt: LocalDateTime
+data class MessageModel(
+    val id: Uuid, val text: String, val createAt: LocalDateTime, val anonName: String, val anonNameColor: Long
 )

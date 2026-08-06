@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,12 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import anonchat.shared.generated.resources.Res
 import anonchat.shared.generated.resources.online_counter
-import anonchat.shared.generated.resources.settings
-import anonchat.shared.generated.resources.settings_button_name
 import dev.softikk.anonchat.ui.theme.Dimens
 import dev.softikk.anonchat.ui.theme.Hacker
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 private val TopBarMobileHeight = 82.dp
 private val SettingsIconSize = 24.dp
@@ -34,8 +29,13 @@ private val StatusIndicatorSize = 10.dp
 private val TopBarHeight = 52.dp
 
 @Composable
-private fun TitleTopBar(screenName: String, screenDescription: String) {
+private fun TitleTopBar(
+    modifier: Modifier = Modifier,
+    screenName: String,
+    screenDescription: String
+) {
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.mediumPadding)
     ) {
@@ -53,10 +53,11 @@ private fun TitleTopBar(screenName: String, screenDescription: String) {
 }
 
 @Composable
-private fun OnlineCounter(onlineCount: Int) {
+private fun OnlineCounter(onlineCount: Int, modifier: Modifier = Modifier) {
     val onlineCounterText: String = stringResource(Res.string.online_counter, onlineCount)
 
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.smallPadding)
     ) {
@@ -87,26 +88,29 @@ fun TopBarMobile(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+//                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.End
             ) {
                 TitleTopBar(
-                    screenName = screenName, screenDescription = screenDescription
+                    modifier = Modifier.fillMaxWidth(),
+                    screenName = screenName,
+                    screenDescription = screenDescription
                 )
-                IconButton(modifier = Modifier.size(SettingsIconSize), onClick = {
-
-                }) {
-                    Icon(
-                        modifier = Modifier.size(SettingsIconSize),
-                        imageVector = vectorResource(Res.drawable.settings),
-                        contentDescription = stringResource(Res.string.settings_button_name),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+//                IconButton(modifier = Modifier.size(SettingsIconSize), onClick = {
+//
+//                }) {
+//                    Icon(
+//                        modifier = Modifier.size(SettingsIconSize),
+//                        imageVector = vectorResource(Res.drawable.settings),
+//                        contentDescription = stringResource(Res.string.settings_button_name),
+//                        tint = MaterialTheme.colorScheme.onSurface
+//                    )
+//                }
             }
 
             OnlineCounter(
+                modifier = Modifier.fillMaxWidth(),
                 onlineCount = onlineCount
             )
         }
@@ -132,17 +136,18 @@ fun TopBar(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.largePadding)
+//                horizontalArrangement = Arrangement.spacedBy(Dimens.largePadding)
+                horizontalArrangement = Arrangement.End
             ) {
                 OnlineCounter(
                     onlineCount = onlineCount
                 )
 
-                Text(
-                    text = stringResource(Res.string.settings_button_name),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+//                Text(
+//                    text = stringResource(Res.string.settings_button_name),
+//                    style = MaterialTheme.typography.labelLarge,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant
+//                )
             }
         }
     }

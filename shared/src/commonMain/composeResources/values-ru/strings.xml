@@ -1,7 +1,7 @@
 <resources>
     <string name="online_counter">%1$d анон-ов в сети</string>
 
-    <string name="main_room_name">главная комната</string>
+    <string name="main_room_description">главная комната</string>
     <string name="settings_button_name">настройки</string>
     <string name="label_text_field_enter_message">Написать сообщение</string>
 </resources>

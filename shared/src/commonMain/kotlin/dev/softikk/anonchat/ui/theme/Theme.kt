@@ -10,12 +10,12 @@ val lightColorScheme = lightColorScheme(
 )
 
 val darkColorScheme = darkColorScheme(
-    surface = Black, onSurface = White, onSurfaceVariant = LightGray
+    surface = LightBlack, onSurface = White, onSurfaceVariant = LightGray
 )
 
 @Composable
 fun AnonChatTheme(content: @Composable () -> Unit) {
-    val isDarkTheme = false
+    val isDarkTheme = true
     MaterialTheme(
         colorScheme = if (isDarkTheme) darkColorScheme else lightColorScheme,
         typography = Typography,
