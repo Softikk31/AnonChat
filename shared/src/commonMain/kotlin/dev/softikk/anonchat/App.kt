@@ -1,37 +1,30 @@
 package dev.softikk.anonchat
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import anonchat.shared.generated.resources.Res
+import anonchat.shared.generated.resources.main_room_description
+import dev.softikk.anonchat.ui.components.MessageBox
+import dev.softikk.anonchat.ui.components.ToolBar
+import dev.softikk.anonchat.ui.components.TopBar
+import dev.softikk.anonchat.ui.components.TopBarMobile
+import dev.softikk.anonchat.ui.theme.AnonChatTheme
+import dev.softikk.anonchat.ui.theme.Dimens
 import dev.softikk.anonchat.viewmodel.ChatViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.defaultRequest
@@ -43,6 +36,9 @@ import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
+import org.jetbrains.compose.resources.stringResource
+import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.js.JsModule
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalUuidApi::class)
@@ -54,7 +50,7 @@ fun App() {
                 host = HOST
                 port = PORT
                 url {
-                    protocol = URLProtocol.HTTP
+                    protocol = if (IS_SSL) URLProtocol.HTTPS else URLProtocol.HTTP
                 }
             }
             install(WebSockets) {
@@ -63,6 +59,7 @@ fun App() {
         })
     }
     val messages by chat.messages.collectAsState()
+    val online by chat.online.collectAsState()
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -72,74 +69,61 @@ fun App() {
     }
 
     val textFieldState = rememberTextFieldState()
-    Box(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
-    ) {
-        LazyColumn(
+
+    AnonChatTheme {
+        Scaffold(
             modifier = Modifier.fillMaxSize(),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(
-                items = messages, key = { message ->
-                    message.id
-                }) { message ->
-                Column {
-                    Text(
-                        text = message.text
+            containerColor = MaterialTheme.colorScheme.surface,
+            topBar = {
+                if (MobileJs.isMobile()) {
+                    TopBarMobile(
+                        screenName = "/chat",
+                        screenDescription = stringResource(Res.string.main_room_description),
+                        onlineCount = online
                     )
-                    val dateTime = message.createAt.toInstant(TimeZone.UTC)
-                        .toLocalDateTime(TimeZone.currentSystemDefault())
-                    Text(
-                        text = "${dateTime.hour}:${dateTime.minute}, ${dateTime.date.day}.${dateTime.month.number}.${dateTime.year}"
+                } else {
+                    TopBar(
+                        screenName = "/chat",
+                        screenDescription = stringResource(Res.string.main_room_description),
+                        onlineCount = online
                     )
                 }
-            }
-            item {
-                Spacer(Modifier.height(48.dp))
-            }
-        }
-
-        Row(
-            modifier = Modifier.align(Alignment.BottomStart),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-
-            OutlinedTextField(
-                modifier = Modifier.height(48.dp).weight(1f),
-                state = textFieldState,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
-                    selectionColors = TextSelectionColors(
-                        handleColor = Color.Black, backgroundColor = Color.Black.copy(0.1f)
-                    ),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedBorderColor = Color.Black,
-                    unfocusedBorderColor = Color.Black
-                )
-            )
-            Button(
-                modifier = Modifier.height(48.dp), colors = ButtonColors(
-                    containerColor = Color.Black,
-                    contentColor = Color.White,
-                    disabledContainerColor = Color.Black,
-                    disabledContentColor = Color.White
-                ), onClick = {
+            },
+            bottomBar = {
+                ToolBar(
+                    state = textFieldState
+                ) {
                     val text = textFieldState.text.toString()
                     chat.sendMessage(text)
                     textFieldState.edit {
                         delete(0, text.length)
                     }
-                }, shapes = ButtonShapes(
-                    shape = RoundedCornerShape(8.dp), pressedShape = RoundedCornerShape(8.dp)
-                ), content = {
-                    Text(
-                        text = "Input"
+                }
+            }) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier.padding(paddingValues).padding(start = Dimens.mediumPadding),
+                verticalArrangement = Arrangement.spacedBy(Dimens.largePadding)
+            ) {
+                items(messages) { messageModel ->
+                    val localDateTime =
+                        messageModel.createAt.toInstant(TimeZone.UTC).toLocalDateTime(
+                            TimeZone.currentSystemDefault()
+                        )
+                    MessageBox(
+                        anonName = messageModel.anonName,
+                        sentAt = "${localDateTime.time.hour.dateFormatter()}:${localDateTime.time.minute.dateFormatter()} ${localDateTime.day.dateFormatter()}.${localDateTime.month.number.dateFormatter()}.${localDateTime.year}",
+                        text = messageModel.text,
+                        anonNameColor = messageModel.anonNameColor
                     )
-                })
+                }
+            }
         }
     }
 }
+
+@OptIn(ExperimentalWasmJsInterop::class)
+@JsModule("./isMobile.js")
+external object MobileJs {
+    fun isMobile(): Boolean
+}
+fun Int.dateFormatter(): String = if (this.toString().length == 1) "0$this" else this.toString()
