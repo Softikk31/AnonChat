@@ -101,7 +101,7 @@ fun App() {
                 }
             }) { paddingValues ->
             LazyColumn(
-                modifier = Modifier.padding(paddingValues).padding(start = Dimens.mediumPadding),
+                modifier = Modifier.padding(paddingValues).padding(start = Dimens.mediumPadding).fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(Dimens.largePadding)
             ) {
                 items(messages) { messageModel ->
